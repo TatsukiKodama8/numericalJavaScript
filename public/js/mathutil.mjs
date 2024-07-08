@@ -1,3 +1,5 @@
+import * as mc from './mathconst.mjs';
+
 
 /****************************
  *  DEFFERENTIAL EQUATION   *
@@ -6,7 +8,7 @@
 // 4th-order Runge-Kutta method
 // Solve dy[i]/dx = func(x, y[0](x), y[1](x), ..., y[i], ...)
 // Note that y and func() are array.
-const rk4 = (func, x, y, dx) => {
+export const rk4 = (func, x, y, dx) => {
     const halfDx = dx / 2;
     let k1      = func(x, y).map(value => value * dx);
     let yTemp1  = y.map((value, i) => value + k1[i] / 2);
@@ -29,21 +31,42 @@ const simpson = (func, lowerLimit, upperLimit, eps) => {
     return;
 }
 
-// TODO
 // Gauss-Legendre quadrature
-const gauLegWeight = (x1, x2, n, EPS) => {
+export const gauLegWeight = (x1, x2, n, EPS) => {
     // map range x1 and x2 to -1 and 1
-    let m = (n + 1.0)/2.0;
+    let m, i, j;
+    let z1, z, xm, xl, pp, p3, p2, p1;
+    let x = [], w = [];
+    
+    m = (n + 1)/2;
     xm = 0.5*(x2 + x1);
     xl = 0.5*(x2 - x1);
-
-    //
-    for (let i = 0; i <= m; i++) {
-        let z = Math.cos(3.141592654*(i-0.25)/(n+0.5));
-    }
+    for ( i = 1; i<=m; i++) {
+        z = Math.cos(mc.PI*(i - 0.25)/(n + 0.5));
+        do {                // Loop up recurrence relation to get the 
+            p1 = 1.0;       // Legendre polynomial evaluated at z
+            p2 = 0.0;
+            for (  j = 1; j <= n; j++ ) {
+                p3 = p2;
+                p2 = p1;
+                p1 = ( (2.0*j - 1.0)*z*p2 - (j - 1.0)*p3)/j;
+            }
+            pp = n*(z*p1 - p2)/(z*z - 1.0);
+            z1 = z;
+            z = z1 - p1/pp;
+        } while ( (z - z1) > EPS );
+        x[i] = xm - xl*z;
+        x[n + 1 - i] = xm  + xl*z;
+        w[i] = 2.0*xl/((1.0 - z*z)*pp*pp);
+        w[n + 1 - i] = w[i];
+    } 
+    // eliminate first element
+    x.shift();
+    w.shift();
+    return { "zeroth": x, "weight": w }
 }
 const gauLegQuad = (func) => {
     return;
 }
 
-export { rk4, simpson, gauLegWeight, gauLegQuad};
+//export { rk4, simpson, gauLegWeight, gauLegQuad};
